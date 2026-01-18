@@ -1,0 +1,30 @@
+package com.jdreyes.healthconnect_patient_service.controller;
+
+
+import com.jdreyes.healthconnect_patient_service.business.service.DocumentTypeService;
+import com.jdreyes.healthconnect_patient_service.model.entity.DocumentType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/doctypes")
+@RequiredArgsConstructor
+public class DocumentTypeController {
+
+    @Autowired
+    private final DocumentTypeService service;
+
+    @PostMapping
+    public ResponseEntity<DocumentType> create(@RequestBody DocumentType documentType) {
+        return new ResponseEntity<>(service.create(documentType), HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<DocumentType>> getAll() {
+        return ResponseEntity.ok(service.getAllActive());
+    }
+}
