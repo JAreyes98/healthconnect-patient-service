@@ -1,6 +1,5 @@
 package com.jdreyes.healthconnect_patient_service.business.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.UUID;
 
@@ -8,21 +7,23 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.jdreyes.healthconnect_patient_service.business.interfaces.StorageBaseService;
-import com.jdreyes.healthconnect_patient_service.model.entity.StorageProvider;
 import com.jdreyes.healthconnect_patient_service.utils.EncryptionUtils;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Service
-public class StorageService extends StorageBaseService{
+public class StorageService extends RabbitAuditService implements StorageBaseService {
+
+    @Getter
+    private final String serviceName = "Storage Service";
+
     private final RestTemplate restTemplate;
 
     @Value("${app.storage.service.url}")
@@ -82,8 +83,11 @@ public class StorageService extends StorageBaseService{
             if (response.getBody() != null) {
                 System.out.println("Attachment id: " + response.getBody().getId());
             }
+            
+            logEvent("FILE_UPLOAD", "UPLOADING FILE USING STORAGE SERVICE" , "INFO"); 
             return response.getBody().getId();
         }catch(Exception e){
+            logEvent("FILE_UPLOAD", e.getLocalizedMessage() , "ERROR"); 
             throw e;
         }
     }
@@ -103,6 +107,7 @@ public class StorageService extends StorageBaseService{
                 byte[].class
         );
 
+        logEvent("FILE_DOWNLOAD", "DOWNLOADING FILE USING STORAGE SERVICE" , "INFO"); 
         // 2. Descifrar usando tu Utility (Quitar capa Java)
         return EncryptionUtils.decryptFile(response.getBody(), javaSecretKey);
     }

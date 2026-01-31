@@ -3,6 +3,7 @@ package com.jdreyes.healthconnect_patient_service.business.service;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,29 +16,36 @@ import com.jdreyes.healthconnect_patient_service.repository.MedicalRecordReposit
 import com.jdreyes.healthconnect_patient_service.repository.PatientRepository;
 
 import jakarta.transaction.Transactional;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class MedicalRecordService {
+public class MedicalRecordService  extends RabbitAuditService{
+
+    @Getter
+    private final String serviceName = "Medical Record Service";
+
     private final MedicalRecordRepository medicalRecordRepository;
     private final PatientRepository patientRepository;
     private final DocumentTypeRepository documentTypeRepository;
     private final StorageService storageService;
 
+    
+
+    public Optional<MedicalRecord> findById(UUID medicalRecordID) {
+        logEvent("SEARCH", "DOCUMENT TYPE FIND BY ID - " + medicalRecordID.toString(), "INFO");  
+        return this.medicalRecordRepository.findById(medicalRecordID);
+    }
+
     @Autowired
-    public MedicalRecordService(MedicalRecordRepository medicalRecordRepository, PatientRepository patientRepository,
-            DocumentTypeRepository documentTypeRepository, StorageService storageService) {
+    public MedicalRecordService(MedicalRecordRepository medicalRecordRepository,
+            PatientRepository patientRepository, DocumentTypeRepository documentTypeRepository,
+            StorageService storageService) {
         this.medicalRecordRepository = medicalRecordRepository;
         this.patientRepository = patientRepository;
         this.documentTypeRepository = documentTypeRepository;
         this.storageService = storageService;
-    }
-
-    public Optional<MedicalRecord> findById(UUID medicalRecordID) {
-        System.out.println("DEBUG: Buscando ID exacto: [" + medicalRecordID + "]");
-        System.out.println("DEBUG: Longitud del String: " + medicalRecordID.toString().length());
-        return this.medicalRecordRepository.findById(medicalRecordID);
     }
 
     @Transactional
@@ -65,7 +73,9 @@ public class MedicalRecordService {
         record.setAttachmentId(storageAttachmentId);
         record.setOriginalFileName(file.getOriginalFilename());
 
-        return medicalRecordRepository.save(record);
+        var saved =  medicalRecordRepository.save(record);
+        logEvent("CREATE", "A NEW MEDICAL RECORD WAS CREATED", "INFO");
+        return saved;
     }
 
     public byte[] downloadAttachment(UUID recordId) throws Exception {
@@ -76,6 +86,7 @@ public class MedicalRecordService {
             throw new RuntimeException("This record has no attachment");
         }
 
+        logEvent("SEARCH", "MEDICAL RECORD WAS RETURNED", "INFO"); 
         // Recupera de Go y descifra la capa Java
         return storageService.fetch(record.getAttachmentId());
     }

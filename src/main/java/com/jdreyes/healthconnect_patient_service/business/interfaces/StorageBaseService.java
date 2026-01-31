@@ -15,7 +15,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public abstract class StorageBaseService {
+public interface StorageBaseService {
     /**
      * Procesa, cifra y envía un archivo al servicio de almacenamiento.
      * @return El UUID generado por el servicio de almacenamiento.
@@ -27,7 +27,7 @@ public abstract class StorageBaseService {
      */
     public abstract byte[] fetch(UUID fileId) throws Exception;
 
-    public void encryptAndStore(InputStream input, OutputStream output, String secretKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException {
+    default void encryptAndStore(InputStream input, OutputStream output, String secretKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IOException {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         byte[] iv = new byte[12];
         new SecureRandom().nextBytes(iv);

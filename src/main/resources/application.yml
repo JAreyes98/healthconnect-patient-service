@@ -21,13 +21,23 @@ spring:
         max-file-size: 10MB
         max-request-size: 10MB
         enabled: true
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+# Opcional: Virtual host
+    virtual-host: /
+
 # Asegúrate de que estas rutas coincidan con lo que inyectas con @Value
 app:
   security:
     encryption-key: 'q8V5l7LikedWep@1{3[&Cc<XD)+7_3X['
   storage:
     service:
-      url: "http://localhost:8082/api/v1/storage"
+      url: "http://192.168.0.4:8082/api/v1/storage"
       api-key: "fe40c9bd81ade2fde81e3504794f1815"
       api-secret: "8204666ebb943974633a2b6a4d925c4e21709bb56bb32bfb371fcbc69257c09a"
       bucket-name: "patient-docs-local-cipher"
+

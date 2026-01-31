@@ -12,8 +12,14 @@ import com.jdreyes.healthconnect_patient_service.business.dto.StorageProviderDto
 import com.jdreyes.healthconnect_patient_service.model.entity.StorageProvider;
 import com.jdreyes.healthconnect_patient_service.repository.StorageRepository;
 
+import lombok.Getter;
+
 @Service
-public class StorageProviderService {
+public class StorageProviderService extends RabbitAuditService{
+
+    @Getter
+    private final String serviceName = "Storage Provider Service";
+
     private final StorageRepository repository;
 
     @Autowired
@@ -35,7 +41,10 @@ public class StorageProviderService {
             list.forEach(e -> e.setIsDefault(false));
             repository.saveAll(list);
         }
-        return Optional.of(repository.save(provider));
+        var saved = Optional.of(repository.save(provider));
+        
+        logEvent("CREATE", "A NEW STORAGE PROVIDER WAS CREATED", "INFO");
+        return saved;
     }
 
     public Optional<StorageProvider> update(String uuid, StorageProviderDto dto){
@@ -51,10 +60,14 @@ public class StorageProviderService {
             list.forEach(e -> e.setIsDefault(false));
             repository.saveAll(list);
         }
-        return Optional.of(repository.save(provider));
+        var saved = Optional.of(repository.save(provider));
+        
+        logEvent("UPDATE", "A STORAGE PROVIDER WAS UPDATED: "+ provider.getName(), "INFO");
+        return saved;
     }
 
     public List<StorageProvider> findAll(){
+        logEvent("SEARCH", "STORAGE PROVIDER SEARCH - ALL " , "INFO"); 
         return repository.findByActive(true);
     }
 }

@@ -16,10 +16,14 @@ import com.jdreyes.healthconnect_patient_service.utils.BlindIndexUtils;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.Getter;
 
 @Service
 @Transactional
-public class PatientService {
+public class PatientService extends RabbitAuditService{
+
+    @Getter
+    private final String serviceName = "Medical Record Service";
 
     @Autowired
     private PatientRepository patientRepository;
@@ -48,7 +52,9 @@ public class PatientService {
             throw new RuntimeException("Patient with this data (MRN: " + generatedMrn + ") is already registered.");
         }
         patient.setMrn(generatedMrn);
-        return patientRepository.save(patient);
+        var saved = patientRepository.save(patient);
+        logEvent("CREATE", "A NEW PATIENT WAS CREATED", "INFO");
+        return saved;
     }
 
     public Optional<Patient> deletePatient(String uuid){
@@ -57,11 +63,13 @@ public class PatientService {
             throw new EntityNotFoundException("Patient id not found: "  + uuid );
         }
         patientRepository.delete(patient.get());
+        logEvent("DELETE", "PATIENT WAS CREATED: " + patient.get().getPatientId().toString(), "INFO");
         return patient;
     }
     
 
     public List<Patient> getAll(){
+        logEvent("SEARCH", "PATIENT SEARCH - ALL: " , "INFO"); 
         return patientRepository.findAll();
     }
 
@@ -73,11 +81,13 @@ public class PatientService {
         
         // return patientRepository.findByFirstNameIndexAndLastNameIndex(
         //     fNameIdx, lNameIdx);
+        logEvent("SEARCH", String.format("PATIENT SEARCH BY FIRST NAME, LAST NAME AND DOB (%s, %s,%s)", fNameIdx, lNameIdx, dobIdx), "INFO"); 
         return patientRepository.findByFirstNameIndexAndLastNameIndexAndDobIndex(
             fNameIdx, lNameIdx, dobIdx);
     }
 
     public Optional<Patient> findByDni(String dni){
+        logEvent("SEARCH", "PATIENT SEARCH BY DNI: " + dni, "INFO"); 
         return patientRepository.findByDni(dni);
     }
 }
